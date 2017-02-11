@@ -1,14 +1,16 @@
 
-//#if (ARDUINO >= 100)
-// #include <Arduino.h>
-//#else
-// #include <WProgram.h>
-//#endif
-//#include <ros.h>
-//#include <geometry_msgs/Vector3Stamped.h>
-//#include <geometry_msgs/Twist.h>
-//#include <ros/time.h>
+#if (ARDUINO >= 100)
+ #include <Arduino.h>
+#else
+ #include <WProgram.h>
+#endif
+#include <ros.h>
+#include <geometry_msgs/Vector3Stamped.h>
+#include <geometry_msgs/Twist.h>
+#include <ros/time.h>
+
 //#include "robot_specs.h"
+
 #include <SoftwareSerial.h>
 
 SoftwareSerial bt(2,3);
@@ -27,11 +29,11 @@ SoftwareSerial bt(2,3);
 #define BACKWARD 2
 #define STOP 0
 
-//ros::NodeHandle nh;
+ros::NodeHandle nh;
 
-/*
 
-ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", handle_cmd);
+
+//ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", handle_cmd);
 
 geometry_msgs::Vector3Stamped rpm_msg;
 
@@ -40,7 +42,7 @@ ros::Publisher rpm_pub("rpm", &rpm_msg);
 ros::Time current_time;
 ros::Time last_time;
 
-*/
+
 
 
 unsigned long lastMilli = 0;       // loop timing 
@@ -130,12 +132,12 @@ void setup()
      PWM_val1 = 0;
      PWM_val2 = 0;
     
-     /*
+     
      nh.initNode();
      nh.getHardware()->setBaud(57600);
-     nh.subscribe(sub);
+     //nh.subscribe(sub);
      nh.advertise(rpm_pub);
-     */
+     
       
      pinMode(A5,INPUT);
      pinMode(A4,INPUT);
@@ -233,7 +235,7 @@ switch(c)
       bt.print("\tRPM of Right motor :");
       bt.println(long(rpm_act2));
       
-   // publishRPM(time-lastMilli);
+    publishRPM(time-lastMilli);
     
     lastMilli = time;
   }
@@ -354,15 +356,15 @@ void motorRun(int Id , int Direction , int Speed)
   }
 }
 
-//
-//void publishRPM(unsigned long time) {
-//  rpm_msg.header.stamp = nh.now();
-//  rpm_msg.vector.x = rpm_act1;
-//  rpm_msg.vector.y = rpm_act2;
-//  rpm_msg.vector.z = double(time)/1000;
-//  rpm_pub.publish(&rpm_msg);
-//  nh.spinOnce();
-//}
+
+void publishRPM(unsigned long time) {
+  rpm_msg.header.stamp = nh.now();
+  rpm_msg.vector.x = rpm_act1;
+  rpm_msg.vector.y = rpm_act2;
+  rpm_msg.vector.z = double(time)/1000;
+  rpm_pub.publish(&rpm_msg);
+  nh.spinOnce();
+}
 
 
 void encoderLeft() 
