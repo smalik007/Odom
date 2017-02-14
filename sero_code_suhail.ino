@@ -242,25 +242,27 @@ switch(c)
 
 
    bt.print("rpm_req1: ");
-   bt.print(rmp_req1);
+   bt.print(rpm_req1);
    bt.print("\trpm_req2: ");
-   bt.println(rmp_req2);
+   bt.println(rpm_req2);
 
 
    bt.print("PWM1 : ");
-   bt.print(PWM1_val1);
+   bt.print(PWM_val1);
    bt.print("\tPWM2 : ");
-   bt.println(PWM1_val2);
+   bt.println(PWM_val2);
 
 
    
-    if(PWM_val1 > 0) directionLeft = FORWARD;
-    else if(PWM_val1 < 0) directionLeft = BACKWARD;
-    if (rpm_req1 == 0) directionLeft = STOP;
-    if(PWM_val2 > 0) directionRight = FORWARD;
-    else if(PWM_val2 < 0) directionRight = BACKWARD;
-    if (rpm_req2 == 0) directionRight = STOP;
+   // if(PWM_val1 > 0) directionLeft = FORWARD;
+    //else if(PWM_val1 < 0) directionLeft = BACKWARD;
+    //if (rpm_req1 == 0) directionLeft = STOP;
+    //if(PWM_val2 > 0) directionRight = FORWARD;
+    //else if(PWM_val2 < 0) directionRight = BACKWARD;
+    //if (rpm_req2 == 0) directionRight = STOP;
 
+   directionLeft = FORWARD;
+   directionRight = FORWARD;
     motorRun(1,directionLeft,PWM_val1);
     motorRun(2,directionRight,PWM_val2);
 
