@@ -9,7 +9,7 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/time.h>
 
-#include "robot_specs.h
+#include "robot_specs.h"
 
 #include <SoftwareSerial.h>
 
@@ -28,6 +28,10 @@ SoftwareSerial bt(2,3);
 #define FORWARD 1
 #define BACKWARD 2
 #define STOP 0
+
+ros::NodeHandle nh;
+
+
 
 
 
@@ -98,10 +102,13 @@ void handle_cmd( const geometry_msgs::Twist& cmd_msg)
 }
 
 
-ros::NodeHandle nh;
+
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel_mux/input/teleop", handle_cmd);
+
 geometry_msgs::Vector3Stamped rpm_msg;
+
 ros::Publisher rpm_pub("rpm", &rpm_msg);
+
 ros::Time current_time;
 ros::Time last_time;
 
@@ -225,14 +232,28 @@ switch(c)
 
 
 
-      bt.print("RPM of Left motor :");
-      bt.print(long(rpm_act1));
-      bt.print("\tRPM of Right motor :");
-      bt.println(long(rpm_act2));
+//      bt.print("RPM of Left motor :");
+//      bt.print(long(rpm_act1));
+//      bt.print("\tRPM of Right motor :");
+//      bt.println(long(rpm_act2));
 
     PWM_val1 = updatePid(1, PWM_val1, rpm_req1, rpm_act1);
     PWM_val2 = updatePid(2, PWM_val2, rpm_req2, rpm_act2);
 
+
+   bt.print("rpm_req1: ");
+   bt.print(rmp_req1);
+   bt.print("\trpm_req2: ");
+   bt.println(rmp_req2);
+
+
+   bt.print("PWM1 : ");
+   bt.print(PWM1_val1);
+   bt.print("\tPWM2 : ");
+   bt.println(PWM1_val2);
+
+
+   
     if(PWM_val1 > 0) directionLeft = FORWARD;
     else if(PWM_val1 < 0) directionLeft = BACKWARD;
     if (rpm_req1 == 0) directionLeft = STOP;
@@ -259,11 +280,11 @@ void getMotorData(unsigned long time)
   unsigned long dt = time*8;
   long long  dcount1 = count1-countAnt1;
   long long  dcount2 = count2-countAnt2;
- rpm_act1 = (dcount1*60000)/dt;
- rpm_act2 = (dcount2*60000)/dt;
+  rpm_act1 = (dcount1*60000)/dt;
+  rpm_act2 = (dcount2*60000)/dt;
  
- countAnt1 = count1;
- countAnt2 = count2;
+  countAnt1 = count1;
+  countAnt2 = count2;
 }
 
 
