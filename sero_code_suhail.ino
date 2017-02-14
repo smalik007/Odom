@@ -9,7 +9,7 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/time.h>
 
-//#include "robot_specs.h"
+#include "robot_specs.h
 
 #include <SoftwareSerial.h>
 
@@ -33,7 +33,7 @@ ros::NodeHandle nh;
 
 
 
-//ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", handle_cmd);
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel_mux/input/teleop", handle_cmd);
 
 geometry_msgs::Vector3Stamped rpm_msg;
 
@@ -76,15 +76,15 @@ volatile long count2 = 0;
 long countAnt1 = 0;
 long countAnt2 = 0;
 
-//float Kp =   0.5;
-//float Kd =   0;
-//float Ki =   0;
+float Kp =   0.5;
+float Kd =   0;
+float Ki =   0;
 
 
 
 int flagL=0 , flagR=0 , fl , fr;
 
-/*
+
 void handle_cmd( const geometry_msgs::Twist& cmd_msg)
 {
   double x = cmd_msg.linear.x;
@@ -104,10 +104,10 @@ void handle_cmd( const geometry_msgs::Twist& cmd_msg)
   else
   {
     rpm_req1 = x*60/(pi*wheel_diameter)-z*track_width*60/(wheel_diameter*pi*2);
+    rpm_req2 = x*60/(pi*wheel_diameter)+z*track_width*60/(wheel_diameter*pi*2);
   }
-  rpm_req2 = x*60/(pi*wheel_diameter)+z*track_width*60/(wheel_diameter*pi*2);
-  }
-*/
+}
+
 
 
 
@@ -135,7 +135,7 @@ void setup()
      
      nh.initNode();
      nh.getHardware()->setBaud(57600);
-     //nh.subscribe(sub);
+     nh.subscribe(sub);
      nh.advertise(rpm_pub);
      
       
@@ -234,30 +234,28 @@ switch(c)
       bt.print(long(rpm_act1));
       bt.print("\tRPM of Right motor :");
       bt.println(long(rpm_act2));
+
+    PWM_val1 = updatePid(1, PWM_val1, rpm_req1, rpm_act1);
+    PWM_val2 = updatePid(2, PWM_val2, rpm_req2, rpm_act2);
+
+    if(PWM_val1 > 0) directionLeft = FORWARD;
+    else if(PWM_val1 < 0) directionLeft = BACKWARD;
+    if (rpm_req1 == 0) directionLeft = STOP;
+    if(PWM_val2 > 0) directionRight = FORWARD;
+    else if(PWM_val2 < 0) directionRight = BACKWARD;
+    if (rpm_req2 == 0) directionRight = STOP;
+
+    motorRun(1,directionLeft,PWM_val1);
+    motorRun(2,directionRight,PWM_val2);
+
+
+
       
     publishRPM(time-lastMilli);
     
     lastMilli = time;
   }
     
-//    PWM_val1 = updatePid(1, PWM_val1, rpm_req1, rpm_act1);
-//    PWM_val2 = updatePid(2, PWM_val2, rpm_req2, rpm_act2);
-//
-//    if(PWM_val1 > 0) direction1 = FORWARD;
-//    else if(PWM_val1 < 0) direction1 = BACKWARD;
-//    if (rpm_req1 == 0) direction1 = RELEASE;
-//    if(PWM_val2 > 0) direction2 = FORWARD;
-//    else if(PWM_val2 < 0) direction2 = BACKWARD;
-//    if (rpm_req2 == 0) direction2 = RELEASE;
-//    motor1->run(direction1);
-//    motor2->run(direction2);
-//
-//    motor1->setSpeed(abs(PWM_val1));
-//    motor2->setSpeed(abs(PWM_val2));
-
-     
-
-
 }
 
 
@@ -273,7 +271,7 @@ void getMotorData(unsigned long time)
  countAnt2 = count2;
 }
 
-/*
+
 int updatePid(int id, int command, double targetValue, double currentValue) {
   double pidTerm = 0;                            // PID correction
   double error = 0;
@@ -295,11 +293,11 @@ int updatePid(int id, int command, double targetValue, double currentValue) {
     pidTerm = Kp*error + Kd*(error-last_error2) + Ki*int_error2;
     last_error2 = error;
   }
-  new_pwm = constrain(double(command)*MAX_RPM/4095.0 + pidTerm, -MAX_RPM, MAX_RPM);
-  new_cmd = 4095.0*new_pwm/MAX_RPM;
+  new_pwm = constrain(double(command)*MAX_RPM/255.0 + pidTerm, -MAX_RPM, MAX_RPM);
+  new_cmd = 255.0*new_pwm/MAX_RPM;
   return int(new_cmd);
 }
-*/
+
 
 
 
