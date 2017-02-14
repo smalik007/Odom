@@ -29,18 +29,7 @@ SoftwareSerial bt(2,3);
 #define BACKWARD 2
 #define STOP 0
 
-ros::NodeHandle nh;
 
-
-
-ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel_mux/input/teleop", handle_cmd);
-
-geometry_msgs::Vector3Stamped rpm_msg;
-
-ros::Publisher rpm_pub("rpm", &rpm_msg);
-
-ros::Time current_time;
-ros::Time last_time;
 
 
 
@@ -109,6 +98,12 @@ void handle_cmd( const geometry_msgs::Twist& cmd_msg)
 }
 
 
+ros::NodeHandle nh;
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel_mux/input/teleop", handle_cmd);
+geometry_msgs::Vector3Stamped rpm_msg;
+ros::Publisher rpm_pub("rpm", &rpm_msg);
+ros::Time current_time;
+ros::Time last_time;
 
 
 char c;
