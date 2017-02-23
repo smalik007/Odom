@@ -29,20 +29,11 @@ SoftwareSerial bt(2,3);
 #define BACKWARD 2
 #define STOP 0
 
-ros::NodeHandle nh;
-
-
-
-
-
-
-
-
 unsigned long lastMilli = 0;       // loop timing 
 unsigned long lastMilliPub = 0;
 
-long long rpm_req1 = 0;
-double rpm_req2 = 0;
+long rpm_req1 = 0;
+long rpm_req2 = 0;
 
 long long rpm_act1 = 0;
 long long rpm_act2 = 0;
@@ -60,8 +51,8 @@ int directionRight = FORWARD;
 
 
 
-int PWM_val1 = 0;
-int PWM_val2 = 0;
+ int PWM_val1 = 0;
+ int PWM_val2 = 0;
 
 volatile long count1 = 0;          // rev counter
 volatile long count2 = 0;
@@ -77,6 +68,8 @@ float Ki =   0;
 
 int flagL=0 , flagR=0 , fl , fr;
 
+
+ros::NodeHandle nh;
 
 void handle_cmd( const geometry_msgs::Twist& cmd_msg)
 {
@@ -103,14 +96,14 @@ void handle_cmd( const geometry_msgs::Twist& cmd_msg)
 
 
 
-ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel_mux/input/teleop", handle_cmd);
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", handle_cmd);
 
 geometry_msgs::Vector3Stamped rpm_msg;
-
 ros::Publisher rpm_pub("rpm", &rpm_msg);
 
 ros::Time current_time;
 ros::Time last_time;
+
 
 
 char c;
@@ -136,8 +129,8 @@ void setup()
     
      
      nh.initNode();
-     nh.getHardware()->setBaud(57600);
-     nh.subscribe(sub);
+    nh.getHardware()->setBaud(57600);
+    nh.subscribe(sub);
      nh.advertise(rpm_pub);
      
       
@@ -157,6 +150,8 @@ void setup()
     digitalWrite(RightMotorA , LOW);
     digitalWrite(RightMotorB , LOW);
     
+    
+    
    
 }
 
@@ -166,14 +161,16 @@ void loop()
     if(bt.available())
     {
        c = bt.read();
-    }
-
-
-
-switch(c)
+       
+       switch(c)
     {
-      case 'f' : motorRun(1,FORWARD,180);
-               motorRun(2,FORWARD,180);
+      
+      
+      case 'f' :
+                PWM_val1 = 150;
+                PWM_val2 = 150;
+               motorRun(1,FORWARD,PWM_val1);
+               motorRun(2,FORWARD,PWM_val2);
                break;
     
       case 'b' : motorRun(1,BACKWARD,180);
@@ -188,42 +185,52 @@ switch(c)
                motorRun(2,STOP,0);
                break;
     
-       case 's' : motorRun(1,STOP,0);
+       case 's' : 
+                PWM_val1 = 0;
+                PWM_val2 = 0;
+               motorRun(1,STOP,0);
                motorRun(2,STOP,0);
                break;
     
     
-      default : motorRun(1,STOP,0);
-               motorRun(2,STOP,0);
+      default : PWM_val1 = 0;
+                PWM_val2 = 0;
+              
                break;        
     }
+    
+    }
+
+
+
+
 
    fl = analogRead(A5);
-  if((fl>150) && flagL==0)
+  if((fl>400) && flagL==0)
     {
       //bt.print("L");
       flagL=1;
       encoderLeft();
     }
     
-    else if(fl<50)
+    else if(fl<100)
     flagL=0;
 
      fr=analogRead(A4);
-    if((fr>150) && flagR==0)
+    if((fr>400) && flagR==0)
     {
       //bt.print("R");
       flagR=1;
       encoderRight();
     }
-    else if(fr<50)
+    else if(fr<100)
     flagR=0;
 
 
     
 
   
- // nh.spinOnce();
+ 
  
    unsigned long time = millis();
   if(time-lastMilli>= 500) 
@@ -232,26 +239,32 @@ switch(c)
 
 
 
-//      bt.print("RPM of Left motor :");
-//      bt.print(long(rpm_act1));
-//      bt.print("\tRPM of Right motor :");
-//      bt.println(long(rpm_act2));
-
-    PWM_val1 = updatePid(1, PWM_val1, rpm_req1, rpm_act1);
-    PWM_val2 = updatePid(2, PWM_val2, rpm_req2, rpm_act2);
-
-
-   bt.print("rpm_req1: ");
+     bt.print("RPM of Left motor :");
+      bt.print(long(rpm_act1));
+      bt.print("\tRPM of Right motor :");
+      bt.println(long(rpm_act2));
+      
+      
+      bt.print("rpm_req1: ");
    bt.print(rpm_req1);
    bt.print("\trpm_req2: ");
    bt.println(rpm_req2);
+
+   PWM_val1 = abs(updatePid(1, PWM_val1, rpm_req1, rpm_act1));
+   PWM_val2 = abs(updatePid(2, PWM_val2, rpm_req2, rpm_act2));
+
+
+ //PWM_val1 = 150.0*rpm_req1/MAX_RPM;
+ //PWM_val2 = 150.0*rpm_req2/MAX_RPM;
+
+   
 
 
    bt.print("PWM1 : ");
    bt.print(PWM_val1);
    bt.print("\tPWM2 : ");
    bt.println(PWM_val2);
-
+   bt.println();
 
    
    // if(PWM_val1 > 0) directionLeft = FORWARD;
@@ -261,8 +274,9 @@ switch(c)
     //else if(PWM_val2 < 0) directionRight = BACKWARD;
     //if (rpm_req2 == 0) directionRight = STOP;
 
-   directionLeft = FORWARD;
-   directionRight = FORWARD;
+   
+    directionLeft = FORWARD;
+    directionRight = FORWARD;
     motorRun(1,directionLeft,PWM_val1);
     motorRun(2,directionRight,PWM_val2);
 
@@ -274,6 +288,8 @@ switch(c)
     lastMilli = time;
   }
     
+    
+    nh.spinOnce();
 }
 
 
@@ -311,8 +327,15 @@ int updatePid(int id, int command, double targetValue, double currentValue) {
     pidTerm = Kp*error + Kd*(error-last_error2) + Ki*int_error2;
     last_error2 = error;
   }
-  new_pwm = constrain(double(command)*MAX_RPM/255.0 + pidTerm, -MAX_RPM, MAX_RPM);
-  new_cmd = 255.0*new_pwm/MAX_RPM;
+  new_pwm = constrain(abs(command)*MAX_RPM/150.0 + pidTerm, -MAX_RPM, MAX_RPM);
+  
+   bt.print("new_pwm: ");
+   bt.println(new_pwm);
+  
+
+  
+  
+  new_cmd = 150.0*new_pwm/MAX_RPM;
   return int(new_cmd);
 }
 
@@ -340,8 +363,8 @@ void motorRun(int Id , int Direction , int Speed)
 
                else if(Direction == STOP)
                {
-               digitalWrite(LeftMotorA , LOW);
-               digitalWrite(LeftMotorB , LOW);
+               digitalWrite(LeftMotorA , HIGH);
+               digitalWrite(LeftMotorB , HIGH);
                break;
                }  
 
@@ -363,8 +386,8 @@ void motorRun(int Id , int Direction , int Speed)
 
                else if(Direction == STOP)
                 {
-               digitalWrite(RightMotorA , 0);
-               digitalWrite(RightMotorB , 0);
+               digitalWrite(RightMotorA , HIGH);
+               digitalWrite(RightMotorB , HIGH);
                break;
                } 
 
