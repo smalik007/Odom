@@ -11,9 +11,7 @@
 
 #include "robot_specs.h"
 
-#include <SoftwareSerial.h>
 
-SoftwareSerial bt(2,3);
 
 #define LeftMotorA  5
 #define LeftMotorB  9
@@ -96,7 +94,7 @@ void handle_cmd( const geometry_msgs::Twist& cmd_msg)
 
 
 
-ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", handle_cmd);
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel_mux/input/teleop", handle_cmd);
 
 geometry_msgs::Vector3Stamped rpm_msg;
 ros::Publisher rpm_pub("rpm", &rpm_msg);
@@ -110,7 +108,7 @@ char c;
 
 void setup() 
 {
-     bt.begin(9600);
+     Serial1.begin(9600);
      
      count1 = 0;
      count2 = 0;
@@ -158,9 +156,9 @@ void setup()
 void loop() 
 {
 
-    if(bt.available())
+    if(Serial1.available())
     {
-       c = bt.read();
+       c = Serial1.read();
        
        switch(c)
     {
@@ -208,7 +206,7 @@ void loop()
    fl = analogRead(A5);
   if((fl>400) && flagL==0)
     {
-      //bt.print("L");
+      //Serial1.print("L");
       flagL=1;
       encoderLeft();
     }
@@ -219,7 +217,7 @@ void loop()
      fr=analogRead(A4);
     if((fr>400) && flagR==0)
     {
-      //bt.print("R");
+      //Serial1.print("R");
       flagR=1;
       encoderRight();
     }
@@ -239,16 +237,16 @@ void loop()
 
 
 
-     bt.print("RPM of Left motor :");
-      bt.print(long(rpm_act1));
-      bt.print("\tRPM of Right motor :");
-      bt.println(long(rpm_act2));
+     Serial1.print("RPM of Left motor :");
+      Serial1.print(long(rpm_act1));
+      Serial1.print("\tRPM of Right motor :");
+      Serial1.println(long(rpm_act2));
       
       
-      bt.print("rpm_req1: ");
-   bt.print(rpm_req1);
-   bt.print("\trpm_req2: ");
-   bt.println(rpm_req2);
+      Serial1.print("rpm_req1: ");
+   Serial1.print(rpm_req1);
+   Serial1.print("\trpm_req2: ");
+   Serial1.println(rpm_req2);
 
    PWM_val1 = abs(updatePid(1, PWM_val1, rpm_req1, rpm_act1));
    PWM_val2 = abs(updatePid(2, PWM_val2, rpm_req2, rpm_act2));
@@ -260,11 +258,11 @@ void loop()
    
 
 
-   bt.print("PWM1 : ");
-   bt.print(PWM_val1);
-   bt.print("\tPWM2 : ");
-   bt.println(PWM_val2);
-   bt.println();
+   Serial1.print("PWM1 : ");
+   Serial1.print(PWM_val1);
+   Serial1.print("\tPWM2 : ");
+   Serial1.println(PWM_val2);
+   Serial1.println();
 
    
    // if(PWM_val1 > 0) directionLeft = FORWARD;
@@ -329,8 +327,8 @@ int updatePid(int id, int command, double targetValue, double currentValue) {
   }
   new_pwm = constrain(abs(command)*MAX_RPM/150.0 + pidTerm, -MAX_RPM, MAX_RPM);
   
-   bt.print("new_pwm: ");
-   bt.println(new_pwm);
+   //Serial1.print("new_pwm: ");
+   //Serial1.println(new_pwm);
   
 
   
